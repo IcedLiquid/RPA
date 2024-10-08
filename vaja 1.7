@@ -1,0 +1,19 @@
+#include <stdio.h>
+#include <time.h>
+
+int main() {
+    int year, month, day;
+  time_t mojcas;
+  mojcas = time(NULL);
+  char *cas_string = ctime(&mojcas);
+  printf("cas:%s",mojcas);
+  
+
+    printf("Vnesi datum v zapisu ISO 8601:\n");
+    scanf("%d-%d-%d", &year, &month, &day);
+
+    printf("Pretvorjen zapis:\n");
+    printf("%d.%d.%d\n", day, month, year);
+
+    return 0;
+}
