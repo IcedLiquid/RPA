@@ -1,0 +1,18 @@
+
+#include <stdio.h>
+
+int main(void) {
+  int x = 4;
+  switch(x){
+    case 1: printf ("ocena: negativno \n");
+    break;
+    case 2: printf ("ocena: zadostno \n");
+    break;
+    case 3: printf ("ocena: dobro \n");
+    break;
+    case 4: printf ("ocena: prav dobro \n");
+    break;
+    case 5: printf ("ocena: odlično \n");
+    break;
+}
+}
