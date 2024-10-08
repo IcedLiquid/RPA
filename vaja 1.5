@@ -1,0 +1,22 @@
+#include <stdio.h>
+
+void calculate_change(long long int amount) {
+    // Define the available denominations of banknotes and coins
+  long long int denominations[] = {500, 200, 100, 50, 20, 10, 5, 2, 1};
+  long long int count;
+
+    printf("Izplaˇcilo:\n");
+    printf("-------------------\n");
+    printf("Nominala ˇSt. enot\n");
+    printf("(EUR)\n");
+    printf("-------------------\n");
+
+    // Iterate over the denominations in descending order
+    for (int i = 0; i < sizeof(denominations) / sizeof(denominations[0]); i++) {
+        count = amount / denominations[i];
+        amount %= denominations[i];
+        if (count > 0) {
+            printf("%d %d\n", denominations[i], count);
+        }
+    }
+}
