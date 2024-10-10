@@ -1,0 +1,22 @@
+#include <stdio.h>
+
+int main(void) {
+    unsigned int stevilo_dni, prvi_dan;
+
+    printf("dan v tednu: ");
+    scanf("%u", &stevilo_dni);
+    printf("dni v mescu: ");
+    scanf("%u", &prvi_dan);
+    printf("  P  T  S  C  P  S  N\n");
+
+    for (int i = 1; i < stevilo_dni; i++) {
+            printf("   ");
+        }
+
+        for (int i = 1; i <= prvi_dan; i++) {
+            printf("%3d", i);
+            if ((i + stevilo_dni - 1) % 7 == 0) {
+                printf("\n");
+            }
+        }
+    }
