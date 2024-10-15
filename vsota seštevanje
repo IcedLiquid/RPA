@@ -9,3 +9,14 @@ int main(void) {
     printf("vsota: %d\n", vsota);
   }
 }
+
+
+#include <stdio.h>
+
+int sestej(int a, int b) {
+  return a + b;
+}
+
+int main(void) {
+  printf("%d", sestej(5,6));
+}
