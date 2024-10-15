@@ -1,0 +1,30 @@
+#include <stdio.h>
+
+// Function to count how many elements are greater than the average
+int stVecjihOdSred(float t[], int n) {
+    float sum = 0.0;
+
+    // Calculate the sum of the array elements
+    for (int i = 0; i < n; i++) {
+        sum += t[i];
+    }
+
+    // Calculate the average
+    float average = sum / n;
+    int count = 0;
+
+    // Count how many elements are greater than the average
+    for (int i = 0; i < n; i++) {
+        if (t[i] > average) count++;
+    }
+
+    return count; // Return the count
+}
+
+#define N 6 // Define the size of the array
+
+int main(void) {
+    float t[N] = {1.5, 2.1, 1.8, 2.3, 16.9, 0.9}; // Initialize the array
+    printf("%d\n", stVecjihOdSred(t, N)); // Print the count of elements greater than the average
+    return 0;
+}
