@@ -1,0 +1,59 @@
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+#define SCREEN_WIDTH 128 // OLED display width, in pixels
+#define SCREEN_HEIGHT 64 // OLED display height, in pixels
+
+// Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+
+// Pozicija avta
+int carX = 0; // Začetna X koordinata avta
+const int carWidth = 35; // Širina avta (povečana)
+const int carHeight = 12; // Višina avta (povečana)
+const int carRoofHeight = 7; // Višina strehe avta (povečana)
+const int spoilerHeight = 3; // Višina spojlerja
+
+void setup() {
+  Serial.begin(115200);
+
+  // Initialize the display
+  if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // Address 0x3C for 128x64
+    Serial.println(F("SSD1306 allocation failed"));
+    for(;;); // Loop forever if allocation failed
+  }
+  display.clearDisplay();
+  display.display(); // Clear the display initially
+}
+
+void drawCar(int x, int y) {
+  // Nariši avto (preprosta oblika)
+  display.fillRect(x, y, carWidth, carHeight, WHITE); // Telo avta
+  display.fillRect(x + 2, y - carRoofHeight, carWidth - 4, carRoofHeight, WHITE); // Streha avta
+
+// Nariši spoiler (trikotnik)
+  display.fillTriangle(x + 7, y - carRoofHeight, x + 12, y - carRoofHeight, x + 9.5, y - carRoofHeight - 5, WHITE);
+
+  // Kolesa (premaknjena bližje telesu)
+  display.fillCircle(x + 6, y + carHeight, 4, WHITE); // Sprednja kolesa
+  display.fillCircle(x + carWidth - 6, y + carHeight, 4, WHITE); // Zadnja kolesa
+}
+
+void loop() {
+  display.clearDisplay(); // Počisti zaslon
+
+  // Nariši avto na trenutni poziciji
+  drawCar(carX, SCREEN_HEIGHT - carHeight - 10); // Avto se nahaja 10 pikslov od dna zaslona
+
+  // Premakni avto desno
+  carX += 2; // Hitrost premikanja avta
+
+  // Če avto doseže konec zaslona, ga ponastavi na začetek
+  if (carX > SCREEN_WIDTH) {
+    carX = -carWidth; // Ponastavi na levo stran
+  }
+
+  display.display(); // Posodobi zaslon
+  delay(50); // Zamuda za počasnejše premikanje avta
+}
