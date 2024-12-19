@@ -1,0 +1,100 @@
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+#define OLED_RESET -1
+#define SCREEN_ADDRESS 0x3C
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
+// Pin definitions
+#define buttonScreenPin 15 // Button for screen
+#define buttonLEDPin 4     // Button for LED
+#define led1 16
+#define led2 17
+#define led3 18
+#define led4 19
+
+void setup() {
+    // Initialize the display
+    Serial.begin(9600);
+
+    // Initialize the OLED display
+    if (!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
+        Serial.println("SSD1306 allocation failed");
+        for(;;); // Don't proceed, loop forever
+    }
+    display.clearDisplay();
+    display.setTextSize(1);
+    display.setTextColor(SSD1306_WHITE);
+    
+    // Initialize button pins
+    pinMode(led1, OUTPUT);
+    pinMode(led2, OUTPUT);
+    pinMode(led3, OUTPUT);
+    pinMode(led4, OUTPUT);
+    pinMode(buttonScreenPin, INPUT_PULLUP);
+    pinMode(buttonLEDPin, INPUT_PULLUP);
+}
+
+void displayScreen(); 
+void ledWaves(); 
+
+void loop() {
+    static bool lastScreenButtonState = HIGH;
+    static bool lastLEDButtonState = HIGH;
+
+    // Check if the screen button is pressed
+    bool currentScreenButtonState = digitalRead(buttonScreenPin);
+    if (currentScreenButtonState == LOW && lastScreenButtonState == HIGH) {
+        displayScreen();
+    }
+    lastScreenButtonState = currentScreenButtonState;
+
+    // Check if the LED button is pressed
+    bool currentLEDButtonState = digitalRead(buttonLEDPin);
+    if (currentLEDButtonState == LOW && lastLEDButtonState == HIGH) {
+        ledWaves(); // Call the function to create LED wave effect
+    }
+    lastLEDButtonState = currentLEDButtonState;
+}
+
+void displayScreen() {
+    // Clear the display
+    display.clearDisplay();
+    
+    // Display text
+    display.setCursor(0, 0);
+    display.println("My Name Jeff");
+    display.display();
+    
+    // Wait for button release
+    while (digitalRead(buttonScreenPin) == LOW) {
+        delay(10);
+    }
+    
+    // Clear the display after the button is released
+    display.clearDisplay();
+    display.display();
+}
+
+void ledWaves() {
+    // Create wave effect going forward and backward
+    for (int i = 0; i < 4; i++) {
+        // Turn on the current LED
+        digitalWrite(led1 + i, HIGH); // led1 + i gives led1, led2, led3, led4
+        delay(200); // Wait for 200 milliseconds
+
+        // Turn off the current LED
+        digitalWrite(led1 + i, LOW); // Turn off the LED
+    }
+
+    // Now create the wave effect going backward
+    for (int i = 2; i >= 0; i--) { // Start from led3 and go to led1
+        digitalWrite(led1 + i, HIGH); // Turn on the current LED
+        delay(200); // Wait for 200 milliseconds
+
+        digitalWrite(led1 + i, LOW); // Turn off the LED
+    }
+}
