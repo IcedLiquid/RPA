@@ -8,28 +8,22 @@
 #define SCREEN_ADDRESS 0x3C
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-// Pin definitions
-#define buttonScreenPin 15 // Button for screen
-#define buttonLEDPin 4     // Button for LED
+#define buttonScreenPin 15
+#define buttonLEDPin 4
 #define led1 16
 #define led2 17
 #define led3 18
 #define led4 19
+#define potPin 14
 
 void setup() {
-    // Initialize the display
     Serial.begin(9600);
-
-    // Initialize the OLED display
     if (!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
         Serial.println("SSD1306 allocation failed");
-        for(;;); // Don't proceed, loop forever
+        for(;;);
     }
     display.clearDisplay();
-    display.setTextSize(1);
     display.setTextColor(SSD1306_WHITE);
-    
-    // Initialize button pins
     pinMode(led1, OUTPUT);
     pinMode(led2, OUTPUT);
     pinMode(led3, OUTPUT);
@@ -44,57 +38,42 @@ void ledWaves();
 void loop() {
     static bool lastScreenButtonState = HIGH;
     static bool lastLEDButtonState = HIGH;
-
-    // Check if the screen button is pressed
     bool currentScreenButtonState = digitalRead(buttonScreenPin);
     if (currentScreenButtonState == LOW && lastScreenButtonState == HIGH) {
         displayScreen();
     }
     lastScreenButtonState = currentScreenButtonState;
-
-    // Check if the LED button is pressed
     bool currentLEDButtonState = digitalRead(buttonLEDPin);
     if (currentLEDButtonState == LOW && lastLEDButtonState == HIGH) {
-        ledWaves(); // Call the function to create LED wave effect
+        ledWaves();
     }
     lastLEDButtonState = currentLEDButtonState;
 }
 
 void displayScreen() {
-    // Clear the display
     display.clearDisplay();
-    
-    // Display text
+    int potValue = analogRead(potPin);
+    int textSize = map(potValue, 0, 1023, 1, 3);
+    display.setTextSize(textSize);
     display.setCursor(0, 0);
     display.println("My Name Jeff");
     display.display();
-    
-    // Wait for button release
     while (digitalRead(buttonScreenPin) == LOW) {
         delay(10);
     }
-    
-    // Clear the display after the button is released
     display.clearDisplay();
     display.display();
 }
 
 void ledWaves() {
-    // Create wave effect going forward and backward
-    for (int i = 0; i < 4; i++) {
-        // Turn on the current LED
-        digitalWrite(led1 + i, HIGH); // led1 + i gives led1, led2, led3, led4
-        delay(200); // Wait for 200 milliseconds
-
-        // Turn off the current LED
-        digitalWrite(led1 + i, LOW); // Turn off the LED
+    for (int n = 0; n < 4; n++) {
+        digitalWrite(led1 + n, HIGH);
+        delay(200);
+        digitalWrite(led1 + n, LOW);
     }
-
-    // Now create the wave effect going backward
-    for (int i = 2; i >= 0; i--) { // Start from led3 and go to led1
-        digitalWrite(led1 + i, HIGH); // Turn on the current LED
-        delay(200); // Wait for 200 milliseconds
-
-        digitalWrite(led1 + i, LOW); // Turn off the LED
+    for (int n = 4; n >= 0; n--) {
+        digitalWrite(led1 + n, HIGH);
+        delay(200);
+        digitalWrite(led1 + n, LOW);
     }
 }
