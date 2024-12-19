@@ -1,0 +1,843 @@
+
+/*Napiši program, ki bo po serijski povezavi vsako sekundo izpisoval temperaturo izmerjeno z NTC termistorjem.
+Termistor ima beta konstanto z NTCvalednostjo 4150K.*/
+
+#include <Arduino.h>
+#include <math.h>
+
+// Definicija konstant
+const int thermistorPin = 12; // Pin, na katerem je termistor
+const float R1 = 10000; // Upornost R1 v ohmih (10kΩ)
+const float beta = 4150; // Beta konstanta v Kelvinah
+const float Tz = 298.15; // Referenčna temperatura (25°C v Kelvinah)
+const float R0 = 10000; // Upornost termistorja pri T0 (10kΩ)
+
+// Funkcija za izračun temperature iz NTC termistorja
+float getTemperature(int analogValue) {
+    // Izračun upornosti termistorja
+    float R2 = R1 * (4095.0 / analogValue - 1); // 4095 za 12-bitni ADC na ESP32
+    
+    // Izračun temperature v Kelvinih
+    float temperatureK = 1.0 / ((log(R2 / R0) / beta) + (1.0 / Tz));
+    
+    // Pretvorba v Celzije
+    float temperatureC = temperatureK - 273.15;
+    
+    return temperatureC;
+}
+
+void setup() {
+    Serial.begin(9600); // Inicializacija serijske povezave
+}
+
+void loop() {
+    int analogValue = analogRead(thermistorPin); // Preberi vrednost iz termistorja
+    float temperature = getTemperature(analogValue); // Izračunaj temperaturo
+    Serial.print("Temperatura: ");
+    Serial.print(temperature);
+    Serial.println(" °C"); // Izpis temperature v Celziju
+    delay(1000); // Počakaj 1 sekundo
+}
+
+
+
+/* Napiši program, ki bo OLED prikazovalniku vsako sekundo osvežil prikaz temperature izmerjene z NTC termistorjem. 
+Termistor ima beta konstanto z vrednostjo 4150K. */
+
+/*  TO MORE BIT VSE V INI-ju CENE NE BO DELALO
+[env:upesy_wroom]
+platform = espressif32
+board = upesy_wroom
+framework = arduino
+monitor_speed = 115200
+lib_deps = 
+    adafruit/Adafruit GFX Library
+    adafruit/Adafruit SSD1306        
+*/
+    
+
+#include <Arduino.h>
+#include <Wire.h>
+#include <math.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+#define SCREEN_WIDTH 128 
+#define SCREEN_HEIGHT 64
+
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+
+// Definicija konstant
+const int thermistorPin = 12; // Pin, na katerem je termistor
+const float R1 = 10000; // Upornost R1 v ohmih (10kΩ)
+const float beta = 4150; // Beta konstanta v Kelvinah
+const float Tz = 298.15; // Referenčna temperatura (25°C v Kelvinah)
+const float R0 = 10000; // Upornost termistorja pri T0 (10kΩ)
+
+// Funkcija za izračun temperature iz NTC termistorja
+float getTemperature(int analogValue) {
+    // Izračun upornosti termistorja
+    float R2 = R1 * (4095.0 / analogValue - 1); // 4095 za 12-bitni ADC na ESP32
+    
+    // Izračun temperature v Kelvinih
+    float temperatureK = 1.0 / ((log(R2 / R0) / beta) + (1.0 / Tz));
+    
+    // Pretvorba v Celzije
+    float temperatureC = temperatureK - 273.15;
+    
+    return temperatureC;
+}
+
+void setup() {
+  Serial.begin(115200);
+}
+
+void loop() {
+
+  if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+    Serial.println(F("SSD1306 allocation failed"));
+    for(;;);
+  }
+  
+  display.clearDisplay();
+  display.setTextSize(2);
+  display.setTextColor(WHITE);
+  display.setCursor(0, 10);
+
+  int analogValue = analogRead(thermistorPin); // Preberi vrednost iz termistorja
+    float temperature = getTemperature(analogValue); // Izračunaj temperaturo
+    display.print("T= ");
+    display.print(temperature);
+    display.println(" C"); // Izpis temperature v Celzijah
+    delay(1000); // Počakaj 1 sekundo
+    display.display(); 
+}
+
+
+
+/*3. vaja
+Napiši program, ki bo povzročil, da se bo svetilnost diode led D1 zvezno
+spreminjala od 0 do maksimalne in nato spet do nič. Cikel naj se neprestano ponavlja.
+*/
+
+#include <Arduino.h>
+
+int led1 = 19;
+
+void setup() {
+  pinMode(led1, OUTPUT);
+}
+
+void loop(){
+
+  // LED svetilnost narašča
+  for(int dutyCycle = 0; dutyCycle <= 255; dutyCycle++){   
+    analogWrite(led1, dutyCycle);
+    delay(10);
+  }
+
+  // LED svetilnost pada
+  for(int dutyCycle = 255; dutyCycle >= 0; dutyCycle--){
+    analogWrite(led1, dutyCycle);
+    delay(10);
+  }
+}
+
+
+/*  
+4. vaja
+Napiši program, ki bo omogočal nastavitev svetilnosti diode led D1 zvezno spreminjala od 0 do 
+maksimalne s pomočjo obračanja potenciometra priključenega na 14 pin mikrokontrolerja.
+*/
+
+#include <Arduino.h>
+
+//Deklaracija pinov in vrednosti potenciometra
+int led1 = 19;
+int potPin = 14;
+int potVal = 0;
+
+void setup() {
+  pinMode(led1, OUTPUT);
+  pinMode(potPin, INPUT);
+}
+
+/*vrednosti potenciometra so od 0 do 4095, lucke pa 0 do 255 in z "map" nardimo da 
+soupada 0 z 0 in 4095 z 255 (super razloženo i know haha)
+*/
+void loop(){
+ potVal = analogRead(potPin);
+ potVal = map(potVal, 0, 4095, 0, 255);
+ analogWrite(led1, potVal);
+ delay(10);
+}
+
+
+
+/*
+5. vaja
+Napiši program, ki bo omogočal nastavitev svetilnosti diode led D1 zvezno 
+od 0 do maksimalne in nato spet do nič s spreminjanjem osvetljenosti 
+foto upora priključenega na pin 13.
+*/
+#include <Arduino.h>
+
+//Deklaracija pinov in vrednosti foto upora
+int led1 = 19;
+int fotoPin = 13;
+int fotoVal = 0;
+
+void setup() {
+  pinMode(led1, OUTPUT);
+  pinMode(fotoPin, INPUT);
+}
+
+/*vrednosti foto upora so od 0 do 4095, lucke pa 0 do 255 in z "map" nardimo da 
+soupada 0 z 0 in 4095 z 255 (super razloženo i know haha)
+*/
+void loop(){
+ fotoVal = analogRead(fotoPin);
+ fotoVal = map(fotoVal, 0, 4095, 0, 255);
+ analogWrite(led1, fotoVal);
+ delay(10);
+}
+
+
+
+/*
+6. vaja
+Napiši program, ki bo s pomočjo potenciometra najprej zvečal svetilnost diode D4 od 0 do 100%. Ko dioda D4 doseže maksimalno svetilnost se začne večati svetilnost diode D3. 
+Ko dioda doseže maksimalno svetilnost se začne večati svetilnost D2. Nato še D1. 
+En obrat potenciometra mora spremeniti začeti z vsemi led diodami ugasnjenimi in končati z vsemi diodami na maksimalni svetilnosti.
+*/
+
+#include <Arduino.h>
+
+const int led1 = 16;
+const int led2 = 17;
+const int led3 = 18;
+const int led4 = 19;
+const int potPin = 14;
+int potVal = 0;
+
+void setup(){
+  pinMode(led1, OUTPUT);
+  pinMode(led2, OUTPUT);
+  pinMode(led3, OUTPUT);
+  pinMode(led4, OUTPUT);
+  pinMode(potPin, INPUT);
+}
+
+void loop(){
+ 
+ potVal = analogRead(potPin);
+ potVal = map(potVal, 0, 1023, 0, 255);
+ analogWrite(led1, potVal);
+ delay(10);
+
+ potVal = analogRead(potPin);
+ potVal = map(potVal, 1023, 2046, 0, 255);
+ analogWrite(led2, potVal);
+ delay(10);
+
+ potVal = analogRead(potPin);
+ potVal = map(potVal, 2046, 3069, 0, 255);
+ analogWrite(led3, potVal);
+ delay(10);
+
+ potVal = analogRead(potPin);
+ potVal = map(potVal, 3069, 4095, 0, 255);
+ analogWrite(led4, potVal);
+ delay(10);
+}
+
+
+
+/*
+7. vaja
+Napiši program, ki bo prikazoval višino temperature s pomočjo štirih led diod,
+tako kot pri 6. vaji.  (testirano s fajrcajgom in za rect dela)
+*/
+
+#include <Arduino.h>
+#include <math.h>
+
+// Definicija konstant
+const int led1 = 16;
+const int led2 = 17;
+const int led3 = 18;
+const int led4 = 19;
+const int thermistorPin = 12; // Pin, na katerem je termistor
+const float R1 = 10000; // Upornost R1 v ohmih (10kΩ)
+const float beta = 4150; // Beta konstanta v Kelvinah
+const float Tz = 298.15; // Referenčna temperatura (25°C v Kelvinah)
+const float R0 = 10000; // Upornost termistorja pri T0 (10kΩ)
+
+// Funkcija za izračun temperature iz NTC termistorja
+float getTemperature(int analogValue) {
+    // Izračun upornosti termistorja
+    float R2 = R1 * (4095.0 / analogValue - 1); // 4095 za 12-bitni ADC na ESP32
+    
+    // Izračun temperature v Kelvinih
+    float temperatureK = 1.0 / ((log(R2 / R0) / beta) + (1.0 / Tz));
+    
+    // Pretvorba v Celzije
+    float temperatureC = temperatureK - 273.15;
+    
+    return temperatureC;
+}
+
+void setup(){
+  pinMode(led1, OUTPUT);
+  pinMode(led2, OUTPUT);
+  pinMode(led3, OUTPUT);
+  pinMode(led4, OUTPUT);
+  pinMode(thermistorPin, INPUT);
+}
+
+void loop(){
+ 
+int analogValue = analogRead(thermistorPin); // Preberi vrednost iz termistorja
+float temperature = getTemperature(analogValue); // Izračunaj temperaturo
+
+ analogValue = analogRead(thermistorPin);
+ analogValue = map(analogValue, 0, 1023, 0, 255);
+ analogWrite(led1, analogValue);
+ delay(10);
+
+ analogValue = analogRead(thermistorPin);
+ analogValue = map(analogValue, 1023, 2046, 0, 255);
+ analogWrite(led2, analogValue);
+ delay(10);
+
+ analogValue = analogRead(thermistorPin);
+ analogValue = map(analogValue, 2046, 3069, 0, 255);
+ analogWrite(led3, analogValue);
+ delay(10);
+
+ analogValue = analogRead(thermistorPin);
+ analogValue = map(analogValue, 3069, 4095, 0, 255);
+ analogWrite(led4, analogValue);
+ delay(10);
+}
+
+
+
+/*
+8. vaja
+Napiši program, ki bo s pomočjo potencimetra spreminjal svetilnosti štirih led. 
+Ko prva led doseže 50% svetilnosti začne svetiti druga. 
+Ko prva dioda sveti s 100%, druga doseže 50% in začne svetiti tretja. 
+Ponovi isto še s četrto.
+*/
+
+#include <Arduino.h>
+
+// Definicija konstant
+const int led1 = 16;
+const int led2 = 17;
+const int led3 = 18;
+const int led4 = 19;
+const int potPin = 14;
+double potVal = 0;
+
+void setup(){
+  pinMode(led1, OUTPUT);
+  pinMode(led2, OUTPUT);
+  pinMode(led3, OUTPUT);
+  pinMode(led4, OUTPUT);
+  pinMode(potPin, INPUT);
+}
+
+void loop(){
+
+ potVal = analogRead(potPin);
+ potVal = map(potVal, 0, 4095, 0, 255);
+ analogWrite(led1, potVal);
+ delay(10);
+
+ potVal = analogRead(potPin);
+ potVal = map(potVal, 1023.75, 4095, 0, 255);
+ analogWrite(led2, potVal);
+ delay(10);
+
+ potVal = analogRead(potPin);
+ potVal = map(potVal, 2047.5, 4095, 0, 255);
+ analogWrite(led3, potVal);
+ delay(10);
+
+ potVal = analogRead(potPin);
+ potVal = map(potVal, 3071.25, 4095, 0, 255);
+ analogWrite(led4, potVal);
+ delay(10);
+}
+
+
+
+
+/*
+11. vaja
+Napiši program, ki bo ob pritisku na prvo tipko na oled dipleju izrisal pobavan krogec. 
+Ob pritisku na drugo tipko naj se na istem mestu izriše ne-pobavan krogec.
+V ini dodaj: monitor_speed = 115200
+             lib_deps = adafruit/Adafruit SSD1306@^2.5.12
+*/
+
+#include <Arduino.h>
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+#define SCREEN_WIDTH 128 // OLED display width, in pixels
+#define SCREEN_HEIGHT 64 // OLED display height, in pixels
+
+// Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+
+// Button pins
+const int button1Pin = 15; // Button 1 pin
+const int button2Pin = 4;   // Button 2 pin
+
+// Circle state flags
+bool circleDrawn = false;   // State for unfilled circle
+bool filledCircleDrawn = false; // State for filled circle
+
+void setup() {
+  Serial.begin(115200);
+
+  // Initialize button pins
+  pinMode(button1Pin, INPUT); // Button 1
+  pinMode(button2Pin, INPUT); // Button 2
+
+  if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // Address 0x3D for 128x64
+    Serial.println(F("SSD1306 allocation failed"));
+    for(;;);
+  }
+  delay(2000);
+  display.clearDisplay();
+  display.display(); // Clear the display initially
+}
+
+void loop() {
+  // Read the button states
+  static bool lastButton1State = HIGH; // Previous state for button 1
+  static bool lastButton2State = HIGH; // Previous state for button 2
+
+  bool button1State = digitalRead(button1Pin) == LOW; // Active LOW
+  bool button2State = digitalRead(button2Pin) == LOW; // Active LOW
+
+  // Check for button 1 press
+  if (button1State && lastButton1State == HIGH) {
+    // Toggle the filled circle state
+    filledCircleDrawn = !filledCircleDrawn;
+  }
+
+  // Check for button 2 press
+  if (button2State && lastButton2State == HIGH) {
+    // Toggle the unfilled circle state
+    circleDrawn = !circleDrawn;
+  }
+
+  // Clear the display for new drawing
+  display.clearDisplay();
+
+  // Draw the circles based on their states
+  if (circleDrawn) {
+    display.drawCircle(64, 32, 20, WHITE);
+  }
+  if (filledCircleDrawn) {
+    display.fillCircle(64, 32, 20, WHITE);
+  }
+
+  // Update the display
+  display.display();
+
+  // Update last button states
+  lastButton1State = button1State;
+  lastButton2State = button2State;
+
+  // Small delay to debounce the buttons
+  delay(100);
+}
+
+
+
+/*
+14. vaja
+Napiši program, ki bo na zaslonu led prikazoval padanje snežink.
+
+TO MORE BIT VSE V INI-ju CENE NE BO DELALO
+[env:upesy_wroom]
+platform = espressif32
+board = upesy_wroom
+framework = arduino
+monitor_speed = 115200
+lib_deps = 
+    adafruit/Adafruit GFX Library
+    adafruit/Adafruit SSD1306      
+      
+*/
+
+
+#include <Arduino.h>
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+#define NUMFLAKES 10
+#define LOGO_HEIGHT 16
+#define LOGO_WIDTH 16
+
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+
+static const unsigned char PROGMEM logo_bmp[] = {
+  B00000000, B11000000,
+  B00000001, B11000000,
+  B00000001, B11000000,
+  B00000011, B11100000,
+  B11110011, B11100000,
+  B11111110, B11111000,
+  B01111110, B11111111,
+  B00110011, B10011111,
+  B00011111, B11111100,
+  B00001101, B01110000,
+  B00011011, B10100000,
+  B00111111, B11100000,
+  B00111111, B11110000,
+  B01111100, B11110000,
+  B01110000, B01110000,
+  B00000000, B00110000
+};
+
+#define XPOS 0
+#define YPOS 1
+#define DELTAY 2
+
+void setup() {
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
+  display.clearDisplay();
+}
+
+void loop() {
+  int8_t f, icons[NUMFLAKES][3];
+
+  for (f = 0; f < NUMFLAKES; f++) {
+    icons[f][XPOS] = random(0, SCREEN_WIDTH - LOGO_WIDTH);
+    icons[f][YPOS] = random(-LOGO_HEIGHT, 0);
+    icons[f][DELTAY] = random(1, 6);
+  }
+
+  while (true) {
+    display.clearDisplay();
+    for (f = 0; f < NUMFLAKES; f++) {
+      display.drawBitmap(icons[f][XPOS], icons[f][YPOS], logo_bmp, LOGO_WIDTH, LOGO_HEIGHT, WHITE);
+      icons[f][YPOS] += icons[f][DELTAY];
+      if (icons[f][YPOS] >= SCREEN_HEIGHT) {
+        icons[f][XPOS] = random(0, SCREEN_WIDTH - LOGO_WIDTH);
+        icons[f][YPOS] = random(-LOGO_HEIGHT, 0);
+        icons[f][DELTAY] = random(1, 6);
+      }
+    }
+    display.display();
+    delay(100);
+  }
+}
+
+
+
+/*
+
+16. vaja
+Napiši program, ki bo na zaslonu oled prikazal premikanje avta od leve proti desni. Ko avto pride do konca displeja, se pokaže spet na levi in potuje proti desni.
+
+*/
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+#define OLED_RESET -1
+
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
+int carX = 0; // začetna pozicija avta
+int carWidth = 16; // širina avta
+int carHeight = 8; // višina avta
+int speed = 2; // hitrost premikanja avta
+
+int guma1 = 0; // začetna pozicija 1 gume
+int speed1 = 2; // hitrost premikanja
+
+int guma2 = 15; // začetna pozicija 2 gume
+int speed2 = 2; // hitrost premikanja
+
+void setup() {
+  // Inicializacija OLED zaslona
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
+  display.clearDisplay();
+}
+
+void loop() {
+  display.clearDisplay();
+
+  // Risanje avta
+  display.fillRect(carX, SCREEN_HEIGHT - carHeight - 7, carWidth, carHeight, WHITE);
+  display.fillCircle(guma1, SCREEN_HEIGHT - carHeight - 0, 3, WHITE);
+  display.fillCircle(guma2, SCREEN_HEIGHT - carHeight - 0, 3, WHITE);
+
+  // Prikaz vsebine na zaslonu
+  display.display();
+
+  // Premik avta
+  carX += speed;
+  guma1 += speed1;
+  guma2 += speed2;
+
+  // Preverimo, če je avto zapustil zaslon
+  if (carX > SCREEN_WIDTH) {
+    carX = -carWidth; // ponastavimo avto na levo stran
+  }
+  if (guma1 > SCREEN_WIDTH) {
+    guma1 = -carWidth; // ponastavimo gume na levo stran
+  }
+  if (guma2 > SCREEN_WIDTH) {
+    guma2 = -carWidth;
+  }
+  delay(50);
+}
+
+
+
+/*********
+16. vaja
+Napiši program, ki bo v centru oled zaslona izrisal kvadrat s stranico 10 pikslov. 
+Kvadrat naj se vrti. 
+Hitrost vrtenja naj bo nastavljiva s potenciometrom.
+
+ini: 
+monitor_speed = 115200
+lib_deps = 
+    adafruit/Adafruit GFX Library
+    adafruit/Adafruit SSD1306  
+*********/
+
+
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+#define SCREEN_WIDTH 128 // Širina OLED zaslona v pikslah
+#define SCREEN_HEIGHT 64 // Višina OLED zaslona v pikslah
+#define POT_PIN 14 // Pin za potenciometer
+
+// Deklaracija za SSD1306 zaslon, povezan preko I2C
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+
+int angle = 0; // Trenutni kot vrtenja
+int squareSize = 10; // Velikost kvadrata
+
+void setup() {
+  Serial.begin(115200);
+
+  // Inicializacija OLED zaslona
+  if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+    Serial.println(F("SSD1306 allocation failed"));
+    for(;;);
+  }
+  display.clearDisplay(); // Počisti zaslon
+}
+
+void loop() {
+  // Preberi vrednost potenciometra in izračunaj hitrost vrtenja
+  int potValue = analogRead(POT_PIN);
+  int delayTime = map(potValue, 0, 4095, 500, 10); // Nastavi zamik med 50 in 500 ms
+
+  // Izriši kvadrat
+  display.clearDisplay(); // Počisti zaslon
+  int x = (SCREEN_WIDTH - squareSize) / 2; // X koordinata
+  int y = (SCREEN_HEIGHT - squareSize) / 2; // Y koordinata
+
+  // Izračunaj rotirane koordinate
+  float rad = radians(angle);
+  int x1 = x + (squareSize / 2) * cos(rad) - (squareSize / 2) * sin(rad);
+  int y1 = y + (squareSize / 2) * sin(rad) + (squareSize / 2) * cos(rad);
+  int x2 = x + (squareSize / 2) * cos(rad + PI/2) - (squareSize / 2) * sin(rad + PI/2);
+  int y2 = y + (squareSize / 2) * sin(rad + PI/2) + (squareSize / 2) * cos(rad + PI/2);
+  int x3 = x + (squareSize / 2) * cos(rad + PI) - (squareSize / 2) * sin(rad + PI);
+  int y3 = y + (squareSize / 2) * sin(rad + PI) + (squareSize / 2) * cos(rad + PI);
+  int x4 = x + (squareSize / 2) * cos(rad + 3*PI/2) - (squareSize / 2) * sin(rad + 3*PI/2);
+  int y4 = y + (squareSize / 2) * sin(rad + 3*PI/2) + (squareSize / 2) * cos(rad + 3*PI/2);
+
+  // Izriši kvadrat
+  display.drawLine(x1, y1, x2, y2, WHITE);
+  display.drawLine(x2, y2, x3, y3, WHITE);
+  display.drawLine(x3, y3, x4, y4, WHITE);
+  display.drawLine(x4, y4, x1, y1, WHITE);
+
+  display.display(); // Prikaži vsebino zaslona
+
+  // Povečaj kot za vrtenje
+  angle += 5; // Povečaj kot za 5 stopinj
+  if (angle >= 360) {
+    angle = 0; // Ponastavi kot, ko doseže 360 stopinj
+  }
+
+  delay(delayTime); // Počakaj pred naslednjim izrisom
+}
+
+
+
+/*********
+17. vaja
+Napiši program, ki bo na zaslonu oled prikazal premikanje izrisane snežinke. 
+Premikanje se izvede s pomočjo spreminjaja položaja potenciometra.
+Celoten premik potenciometra mora zadostovati za premik snežinke čez celotno širino zaslona.
+
+ini:
+monitor_speed = 115200
+lib_deps = 
+    adafruit/Adafruit GFX Library
+    adafruit/Adafruit SSD1306  
+
+*********/
+
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+#define SCREEN_WIDTH 128 // Širina OLED zaslona
+#define SCREEN_HEIGHT 64 // Višina OLED zaslona
+#define POT_PIN 14 // Pin za potenciometer
+
+// Deklaracija za SSD1306 zaslon, povezan preko I2C
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+
+// Bitmap snežinke
+static const unsigned char PROGMEM logo_bmp[] = {
+  B00000000, B11000000,
+  B00000001, B11000000,
+  B00000001, B11000000,
+  B00000011, B11100000,
+  B11110011, B11100000,
+  B11111110, B11111000,
+  B01111110, B11111111,
+  B00110011, B10011111,
+  B00011111, B11111100,
+  B00001101, B01110000,
+  B00011011, B10100000,
+  B00111111, B11100000,
+  B00111111, B11110000,
+  B01111100, B11110000,
+  B01110000, B01110000,
+  B00000000, B00110000
+};
+
+void setup() {
+  Serial.begin(115200);
+  
+  // Inicializacija OLED zaslona
+  if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+    Serial.println(F("SSD1306 allocation failed"));
+    for(;;);
+  }
+  display.clearDisplay(); // Počisti zaslon
+}
+
+void loop() {
+  // Preberi vrednost potenciometra
+  int potValue = analogRead(POT_PIN);
+  
+  // Izračunaj X koordinato snežinke
+  int snowflakeX = map(potValue, 0, 4095, 0, SCREEN_WIDTH - 16); // -16, da se snežinka ne izriše izven zaslona
+
+  // Počisti zaslon
+  display.clearDisplay();
+
+  // Izriši snežinko na izračunanih koordinatah
+  display.drawBitmap(snowflakeX, (SCREEN_HEIGHT - 16) / 2, logo_bmp, 16, 16, WHITE); // Sredina Y koordinata
+
+  // Prikaži vsebino zaslona
+  display.display();
+
+  delay(50); // Kratka zamuda za gladko premikanje
+}
+
+
+
+/*********
+19. vaja
+Napiši program, ki bo na sredini zaslona oled izrisal kvadrat velikosti 5x5 pikslov. 
+Ob vsakem pritisku na prvo tipko se premakne za dva piksla v levo. 
+Ob vsakem pritisku na drugo tipko za dva piklsa v desno. 
+S pomočjo potencimetra se mu nastavi njegova y pozicija od 0 do 64.
+
+ini:
+monitor_speed = 115200
+lib_deps = 
+    adafruit/Adafruit GFX Library
+    adafruit/Adafruit SSD1306  
+
+*********/
+
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+#define POT_PIN 14 // Pin for potentiometer
+#define BUTTON_LEFT 15 // Pin for left button
+#define BUTTON_RIGHT 4 // Pin for right button
+
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+
+int squareX = SCREEN_WIDTH / 2 - 2; // Initial X position (centered)
+int squareY = SCREEN_HEIGHT / 2 - 2; // Initial Y position (centered)
+
+void setup() {
+  Serial.begin(115200);
+  
+  // Initialize OLED display
+  if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+    Serial.println(F("SSD1306 allocation failed"));
+    for(;;);
+  }
+  display.clearDisplay(); // Clear the display
+
+  // Set button pins as input with pull-up resistors
+  pinMode(BUTTON_LEFT, INPUT_PULLUP);
+  pinMode(BUTTON_RIGHT, INPUT_PULLUP);
+}
+
+void loop() {
+  // Read potentiometer value and map it to Y position
+  int potValue = analogRead(POT_PIN);
+  squareY = map(potValue, 0, 4095, 0, SCREEN_HEIGHT - 5); // Map to 0-59 (5 pixels height)
+
+  // Clear the display
+  display.clearDisplay();
+
+  // Draw the square at the current position
+  display.fillRect(squareX, squareY, 5, 5, WHITE);
+  
+  // Display the content
+  display.display();
+
+  // Check button states
+  if (digitalRead(BUTTON_LEFT) == LOW) {
+    squareX -= 2; // Move left
+    if (squareX < 0) squareX = 0; // Prevent going out of bounds
+    delay(200); // Debounce delay
+  }
+  
+  if (digitalRead(BUTTON_RIGHT) == LOW) {
+    squareX += 2; // Move right
+    if (squareX > SCREEN_WIDTH - 5) squareX = SCREEN_WIDTH - 5; // Prevent going out of bounds
+    delay(200); // Debounce delay
+  }
+
+  delay(50); // Short delay for smoother updates
+}
